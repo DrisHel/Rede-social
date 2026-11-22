@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aula 05 - Post</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-100 min-h-screen">
+    <% const likeCount = post._count.likes; %>
+    <% const likedByMe = post.likedByMe; %>
+
+    <header class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Post de <%= post.author.name %></h1>
+      <a href="/" class="text-slate-300 text-sm hover:text-white">&larr; Voltar para o feed</a>
+    </header>
+
+    <main class="max-w-2xl mx-auto mt-8 px-4 flex flex-col gap-4">
+      <article class="bg-white rounded-lg shadow p-4" data-post-id="<%= post.id %>">
+        <header class="flex items-center justify-between">
+          <p class="text-sm font-medium text-slate-800"><%= post.author.name %></p>
+          <p class="text-xs text-slate-400"><%= new Date(post.createdAt).toLocaleString('pt-BR') %></p>
+        </header>
+        <p class="text-slate-700 mt-2"><%= post.content %></p>
+        <% if (post.images.length > 0) { %>
+          <div class="relative mt-3" data-carousel data-index="0">
+            <% post.images.forEach((image, index) => { %>
+              <img src="<%= image.url %>" alt="" data-carousel-image class="rounded-lg max-h-96 w-full object-cover <%= index === 0 ? '' : 'hidden' %>" />
+            <% }) %>
+            <% if (post.images.length > 1) { %>
+              <button type="button" data-carousel-prev class="absolute left-2 top-1/2 bg-white/90 rounded px-2 py-1" aria-label="Foto anterior">&#8249;</button>
+              <button type="button" data-carousel-next class="absolute right-2 top-1/2 bg-white/90 rounded px-2 py-1" aria-label="Próxima foto">&#8250;</button>
+            <% } %>
+          </div>
+        <% } %>
+        <% if (post.tags.length > 0) { %>
+          <div class="flex gap-2 mt-3 flex-wrap">
+            <% post.tags.forEach((tag) => { %>
+              <span class="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">#<%= tag.name %></span>
+            <% }) %>
+          </div>
+        <% } %>
+        <footer class="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
+          <button type="button" data-like-post data-liked="<%= likedByMe %>" aria-pressed="<%= likedByMe %>" class="flex items-center gap-1.5 text-sm <%= likedByMe ? 'text-rose-600' : 'text-slate-500' %>">
+            <span data-like-count><%= likeCount %></span> curtidas
+          </button>
+          <span class="flex items-center gap-1.5 text-sm text-slate-500">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75h6.75m-6.75 3h4.5M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25-9 3.694-9 8.25c0 1.6.497 3.096 1.356 4.36.1.148.14.33.107.507l-.713 3.133 3.94-1.02c.16-.042.33-.02.48.043 1.15.49 2.45.767 3.83.767Z" />
+            </svg>
+            <span data-comment-count><%= comments.length %></span>
+          </span>
+          <% if (post.authorId === currentUser.id) { %>
+            <form method="post" action="/posts/<%= post.id %>/delete" class="ml-auto">
+              <button type="submit" class="text-xs text-red-600 hover:underline">Apagar</button>
+            </form>
+          <% } %>
+        </footer>
+      </article>
+
+      <section class="bg-white rounded-lg shadow p-4">
+        <h2 class="text-slate-500 text-sm font-medium uppercase tracking-wide">Comentários</h2>
+
+        <form data-comment-form class="flex flex-col gap-2 mt-3">
+          <textarea
+            name="content"
+            required
+            maxlength="1000"
+            rows="2"
+            placeholder="Escreva um comentário..."
+            class="w-full border rounded px-3 py-2 text-sm"
+          ></textarea>
+          <button type="submit" class="self-end bg-slate-800 text-white text-sm rounded px-3 py-1.5 hover:bg-slate-700">
+            Comentar
+          </button>
+        </form>
+        <p data-action-error role="status" class="text-sm text-red-600 mt-1"></p>
+
+        <div class="divide-y mt-2" data-comment-list>
+          <% if (comments.length === 0) { %>
+            <p class="text-sm text-slate-500 py-3">Nenhum comentário ainda. Seja o primeiro.</p>
+          <% } %>
+          <% comments.forEach((comment) => { %>
+            <div class="py-3" data-comment-id="<%= comment.id %>">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-slate-800"><%= comment.author.name %></p>
+                <p class="text-xs text-slate-400"><%= new Date(comment.createdAt).toLocaleString('pt-BR') %></p>
+              </div>
+              <p class="text-sm text-slate-700 mt-1" data-comment-content><%= comment.content %></p>
+              <div class="flex items-center gap-3 mt-1">
+                <button type="button" data-like-comment data-liked="<%= comment.likedByMe %>" class="text-xs text-slate-500"><span data-comment-like-count><%= comment._count.likes %></span> curtidas</button>
+                <% if (comment.authorId === currentUser.id) { %>
+                  <button type="button" data-edit-comment class="text-xs text-slate-500">Editar</button>
+                  <button type="button" data-delete-comment class="text-xs text-red-600">Apagar</button>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    </main>
+    <script>
+      const root = document.querySelector('[data-post-id]');
+
+      document.addEventListener('click', async (event) => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest('button');
+        if (!button) return;
+        const comment = button.closest('[data-comment-id]');
+        const postId = root.dataset.postId;
+
+        if (button.matches('[data-carousel-prev], [data-carousel-next]')) {
+          const carousel = button.closest('[data-carousel]');
+          const images = [...carousel.querySelectorAll('[data-carousel-image]')];
+          const direction = button.hasAttribute('data-carousel-next') ? 1 : -1;
+          const index = (Number(carousel.dataset.index) + direction + images.length) % images.length;
+          carousel.dataset.index = String(index);
+          images.forEach((image, imageIndex) => image.classList.toggle('hidden', imageIndex !== index));
+          return;
+        }
+
+        if (button.matches('[data-like-post], [data-like-comment]')) {
+          const postLike = button.matches('[data-like-post]');
+          const count = button.querySelector(postLike ? '[data-like-count]' : '[data-comment-like-count]');
+          const wasLiked = button.dataset.liked === 'true';
+          const previousCount = Number(count.textContent);
+          const nextLiked = !wasLiked;
+          button.dataset.liked = String(nextLiked);
+          count.textContent = String(previousCount + (nextLiked ? 1 : -1));
+          button.disabled = true;
+          try {
+            const url = postLike ? `/posts/${postId}/like` : `/comments/${comment.dataset.commentId}/like`;
+            const response = await fetch(url, { method: nextLiked ? 'POST' : 'DELETE' });
+            if (!response.ok) throw new Error('Não foi possível atualizar a curtida.');
+            const result = await response.json();
+            button.dataset.liked = String(result.liked);
+            count.textContent = String(result.count);
+            button.classList.toggle('text-rose-600', result.liked);
+            button.classList.toggle('text-slate-500', !result.liked);
+            root.querySelector('[data-action-error]').textContent = '';
+          } catch (error) {
+            button.dataset.liked = String(wasLiked);
+            count.textContent = String(previousCount);
+            root.querySelector('[data-action-error]').textContent = error.message;
+          } finally {
+            button.disabled = false;
+          }
+          return;
+        }
+
+        if (button.matches('[data-edit-comment]')) {
+          const content = comment.querySelector('[data-comment-content]');
+          const updated = window.prompt('Editar comentário', content.textContent);
+          if (updated === null || !updated.trim()) return;
+          try {
+            const response = await fetch(`/posts/${postId}/comments/${comment.dataset.commentId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: updated }),
+            });
+            if (!response.ok) throw new Error('Não foi possível editar o comentário.');
+            content.textContent = (await response.json()).content;
+          } catch (error) {
+            root.querySelector('[data-action-error]').textContent = error.message;
+          }
+          return;
+        }
+
+        if (button.matches('[data-delete-comment]') && window.confirm('Apagar este comentário?')) {
+          try {
+            const response = await fetch(`/posts/${postId}/comments/${comment.dataset.commentId}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Não foi possível apagar o comentário.');
+            comment.remove();
+            const count = root.querySelector('[data-comment-count]');
+            count.textContent = String(Number(count.textContent) - 1);
+          } catch (error) {
+            root.querySelector('[data-action-error]').textContent = error.message;
+          }
+        }
+      });
+
+      document.addEventListener('submit', async (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement) || !form.matches('[data-comment-form]')) return;
+        event.preventDefault();
+        const input = form.elements.namedItem('content');
+        const submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        try {
+          const response = await fetch(`/posts/${root.dataset.postId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: input.value }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Não foi possível comentar.');
+          const item = document.createElement('div');
+          item.className = 'py-3';
+          item.dataset.commentId = result.id;
+          const line = document.createElement('p');
+          line.className = 'text-sm font-medium text-slate-800';
+          const author = document.createElement('strong');
+          author.textContent = result.author.name;
+          const content = document.createElement('span');
+          content.dataset.commentContent = '';
+          content.textContent = result.content;
+          line.append(author, document.createTextNode(' '), content);
+          const controls = document.createElement('div');
+          controls.className = 'flex items-center gap-3 mt-1';
+          const like = document.createElement('button');
+          like.type = 'button';
+          like.dataset.likeComment = '';
+          like.dataset.liked = 'false';
+          like.className = 'text-xs text-slate-500';
+          const likeCount = document.createElement('span');
+          likeCount.dataset.commentLikeCount = '';
+          likeCount.textContent = '0';
+          like.append(likeCount, document.createTextNode(' curtidas'));
+          const edit = document.createElement('button');
+          edit.type = 'button';
+          edit.dataset.editComment = '';
+          edit.className = 'text-xs text-slate-500';
+          edit.textContent = 'Editar';
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.dataset.deleteComment = '';
+          remove.className = 'text-xs text-red-600';
+          remove.textContent = 'Apagar';
+          controls.append(like, edit, remove);
+          item.append(line, controls);
+          form.parentElement.querySelector('[data-comment-list]').prepend(item);
+          const count = root.querySelector('[data-comment-count]');
+          count.textContent = String(Number(count.textContent) + 1);
+          form.reset();
+          root.querySelector('[data-action-error]').textContent = '';
+        } catch (error) {
+          root.querySelector('[data-action-error]').textContent = error.message;
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
